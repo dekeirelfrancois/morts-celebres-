@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Deathswatch",
+    "slug": "deathswatch",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0f1115",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.deathswatch"
+    },
+    "android": {
+      "package": "com.example.deathswatch",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f1115"
+      }
+    }
+  }
+}

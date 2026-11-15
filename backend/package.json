@@ -1,0 +1,19 @@
+{
+  "name": "deathswatch-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend qui scrute des flux RSS de presse et expose les annonces de décès de personnalités",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "rss-parser": "^3.13.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
