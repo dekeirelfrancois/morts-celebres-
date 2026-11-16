@@ -45,6 +45,19 @@ EXPO_PUBLIC_API_URL=http://<ip-de-votre-machine>:3000 npx expo start
 
 Scannez le QR code avec l'application **Expo Go** (Android/iOS). Sur téléphone physique, utilisez l'IP locale de votre machine, pas `localhost`.
 
+## Tester sur iPhone (sans rien payer)
+
+1. Installez **Expo Go** depuis l'App Store sur votre iPhone.
+2. Sur votre ordinateur (Mac, Windows ou Linux) :
+   ```bash
+   cd mobile
+   npm install
+   EXPO_PUBLIC_API_URL=http://<ip-de-votre-machine>:3000 npx expo start
+   ```
+3. Scannez le QR code affiché dans le terminal avec l'appareil photo de l'iPhone (iPhone et ordinateur sur le même Wi-Fi).
+
+Pour publier sur l'**App Store** : compte Apple Developer (99 $/an), puis build dans le cloud avec `eas build -p ios` (aucun Mac nécessaire) et soumission via `eas submit`. TestFlight permet de distribuer des versions de test.
+
 ## Limites connues et évolutions
 
 - **Quasi temps réel** : la détection dépend de la fréquence de publication des rédactions (minutes à heures), pas de la seconde.
