@@ -1,9 +1,14 @@
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { PORT } from "./config.js";
 import { list, size } from "./store.js";
 import { startPolling, pollOnce, onNewEntries } from "./poller.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const app = express();
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, entries: size() });
