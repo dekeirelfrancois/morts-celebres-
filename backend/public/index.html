@@ -48,6 +48,21 @@
     }
     .error { color: #e05555; }
     a { color: inherit; text-decoration: none; display: block; }
+    #pushBar {
+      display: none; align-items: center; justify-content: space-between;
+      padding: 10px 12px 0;
+    }
+    #pushHint { font-size: 12px; color: #8a8f98; }
+    #pushBtn {
+      background: #e05555; color: #fff; border: 0; border-radius: 20px;
+      padding: 10px 16px; font-size: 14px; font-weight: 600;
+      font-family: inherit;
+    }
+    #pushBtn:active { opacity: 0.85; }
+    #pushBtn.ok { background: #2f855a; }
+    #pushBadge {
+      display: none; font-size: 12px; color: #68d391; padding: 10px 16px 0;
+    }
   </style>
 </head>
 <body>
@@ -55,6 +70,11 @@
     <h1>Deathswatch</h1>
     <div id="status">Chargement…</div>
   </header>
+  <div id="pushBar">
+    <span id="pushHint">Soyez alerté dès qu'une annonce tombe</span>
+    <button id="pushBtn">🔔 Activer</button>
+  </div>
+  <div id="pushBadge">🔔 Notifications activées</div>
   <main id="list"><div class="spinner"></div></main>
 
   <script>
@@ -104,6 +124,88 @@
     }
     refresh();
     setInterval(refresh, REFRESH_MS);
+
+    // ————— Notifications push —————
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    var isStandalone =
+      window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+    var pushSupported =
+      "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+    function urlBase64ToUint8Array(base64String) {
+      var padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+      var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+      var rawData = atob(base64);
+      var outputArray = new Uint8Array(rawData.length);
+      for (var i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+
+    function setPushState(state) {
+      var bar = document.getElementById("pushBar");
+      var badge = document.getElementById("pushBadge");
+      var btn = document.getElementById("pushBtn");
+      var hint = document.getElementById("pushHint");
+      if (state === "on") {
+        bar.style.display = "none";
+        badge.style.display = "block";
+      } else {
+        badge.style.display = "none";
+        bar.style.display = "flex";
+        if (state === "need-pwa") {
+          hint.textContent = "Notifications : ajoutez d'abord l'app à l'écran d'accueil";
+          btn.style.display = "none";
+        } else if (state === "unsupported") {
+          bar.style.display = "none";
+        } else if (state === "server-off") {
+          bar.style.display = "none";
+        }
+      }
+    }
+
+    async function subscribeToPush() {
+      try {
+        var reg = await navigator.serviceWorker.register("/sw.js");
+        var perm = Notification.permission;
+        if (perm === "default") perm = await Notification.requestPermission();
+        if (perm !== "granted") return;
+
+        var keyRes = await fetch("/api/push-key", { cache: "no-store" });
+        if (!keyRes.ok) return setPushState("server-off");
+        var keyJson = await keyRes.json();
+
+        var existing = await reg.pushManager.getSubscription();
+        var sub =
+          existing ||
+          (await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keyJson.publicKey),
+          }));
+
+        var r = await fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sub),
+        });
+        if (r.ok) setPushState("on");
+      } catch (e) {
+        console.warn("push error", e);
+      }
+    }
+
+    if (pushSupported) {
+      if (isIOS && !isStandalone) {
+        setPushState("need-pwa");
+      } else if (Notification.permission === "granted") {
+        subscribeToPush();
+      } else {
+        setPushState("off");
+        document.getElementById("pushBtn").addEventListener("click", subscribeToPush);
+      }
+    } else {
+      setPushState("unsupported");
+    }
   </script>
 </body>
 </html>

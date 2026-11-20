@@ -71,6 +71,21 @@ Le dépôt contient un blueprint Render (`render.yaml`) prêt à l'emploi :
 **Important (palier gratuit)** : Render endort le serveur après 15 min sans visite ; la première ouverture prend alors ~40 s. Pour un réveil automatique en continu, créez un
 cron gratuit sur **https://cron-job.org** qui appelle `https://VOTRE-URL.onrender.com/health` toutes les 10 min.
 
+## Notifications push (iPhone / Android)
+
+Le backend envoie une notification à chaque nouvelle annonce détectée (via web-push/VAPID).
+
+Configuration :
+1. Générez une paire de clés : `npx web-push generate-vapid-keys`
+2. Définissez les variables d'environnement sur le serveur :
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (obligatoires)
+   - `VAPID_SUBJECT` (optionnel, ex. `mailto:contact@exemple.fr`)
+3. L'utilisateur active les notifications avec le bouton 🔔 dans l'interface.
+
+**iOS** : Web Push fonctionne depuis iOS 16.4, **uniquement** si le site a été ajouté à l'écran d'accueil (bouton Partager → « Sur l'écran d'accueil »). Puis relancez l'app et activez le bouton 🔔.
+
+Endpoints : `GET /api/push-key`, `POST /api/subscribe`, `POST /api/unsubscribe`.
+
 ## Limites connues et évolutions
 
 - **Quasi temps réel** : la détection dépend de la fréquence de publication des rédactions (minutes à heures), pas de la seconde.
