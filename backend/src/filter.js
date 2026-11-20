@@ -3,6 +3,7 @@ import {
   PERSON_HINTS,
   STRONG_OBIT_KEYWORDS,
   NEGATIVE_PATTERNS,
+  NON_HUMAN_WORDS,
 } from "./config.js";
 
 export const MATCH_THRESHOLD = 15;
@@ -33,6 +34,11 @@ export function scoreItem(title, description, lang) {
   let personScore = 0;
   for (const hint of PERSON_HINTS[lang] || []) {
     if (haystack.includes(hint)) personScore += 1;
+  }
+
+  const tNonHuman = NON_HUMAN_WORDS.some((w) => t.includes(w));
+  if (tNonHuman) {
+    return { match: false, score: 0, reason: "non-human-subject" };
   }
 
   const negated = NEGATIVE_PATTERNS.some((re) => re.test(title) || re.test(description));

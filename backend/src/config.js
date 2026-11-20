@@ -125,6 +125,25 @@ export const NEGATIVE_PATTERNS = [
   /drame/i,
   /suicide/i,
   /condamné/i,
+  /condamn(é|ée|és|ées)?\b.*\b(jug|peine|prison|assises)/i,
+  /\bjug\w*\b.*\b(ann|mois|ans|proc|tribunal|assises|peine)/i,
+  /alcool/i,
+  /permis de conduire/i,
   /marche blanche/i,
   /conjoint/i,
+];
+
+// Animaux et non-humains : leur « mort » ne doit jamais déclencher une alerte
+export const NON_HUMAN_WORDS = [
+  "loutre", "chien", "chienne", "chat", "chaton", "panda", "gorille",
+  "éléphant", "lion", "lionne", "tigre", "dauphin", "baleine", "orque",
+  "tortue", "perroquet", "cheval", "jument", "vache", "cochon",
+  "girafe", "zèbre", "ours", "loup", "renard", "singe", "koala",
+  "kangourou", "pingouin", "manchot", "flamant", "autruche", "aigle",
+  "faucon", "hibou", "chouette", "corbeau", "serpent", "crocodile",
+  "alligator", "hippopotame", "rhinocéros", "antilope", "gazelle",
+  "chèvre", "mouton", "âne", "canard", "oie", "cygne", "paon",
+  "poisson", "requin", "morue", "thon", "crevette", "homard",
+  "abeille", "frelon", "araignée", "scorpion", "hamster", "lapin",
+  "furet", "cochon d'inde", "poney", "ânier",
 ];
