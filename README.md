@@ -58,6 +58,19 @@ Scannez le QR code avec l'application **Expo Go** (Android/iOS). Sur téléphone
 
 Pour publier sur l'**App Store** : compte Apple Developer (99 $/an), puis build dans le cloud avec `eas build -p ios` (aucun Mac nécessaire) et soumission via `eas submit`. TestFlight permet de distribuer des versions de test.
 
+## Déploiement cloud gratuit (Render) — l'app accessible partout
+
+Le dépôt contient un blueprint Render (`render.yaml`) prêt à l'emploi :
+
+1. Créez un compte sur **https://dashboard.render.com** (bouton **GitHub** pour s'inscrire)
+2. **New +** → **Blueprint** → autorisez l'accès au dépôt `morts-celebres-` → **Apply**
+3. Render installe et démarre le backend (~2 min) et vous donne une URL du type
+   `https://deathswatch-xxxx.onrender.com`
+4. Sur l'iPhone (et depuis n'importe où) : ouvrez cette URL dans Safari → Partager → « Sur l'écran d'accueil »
+
+**Important (palier gratuit)** : Render endort le serveur après 15 min sans visite ; la première ouverture prend alors ~40 s. Pour un réveil automatique en continu, créez un
+cron gratuit sur **https://cron-job.org** qui appelle `https://VOTRE-URL.onrender.com/health` toutes les 10 min.
+
 ## Limites connues et évolutions
 
 - **Quasi temps réel** : la détection dépend de la fréquence de publication des rédactions (minutes à heures), pas de la seconde.
