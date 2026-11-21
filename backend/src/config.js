@@ -50,21 +50,18 @@ export const RETENTION_HOURS = Number(process.env.RETENTION_HOURS || 72);
 export const DEATH_KEYWORDS = {
   fr: [
     "est mort",
+    "est morte",
     "est décédé",
+    "est décédée",
     "décès de",
     "décès d'",
     "mort de",
     "mort d'",
+    "meurt",
     "vient de mourir",
     "s'est éteint",
     "s'est éteinte",
     "nécrologie",
-    "disparition de",
-    "disparition d'",
-    "adieu à",
-    "hommage à",
-    "rend hommage",
-    "n'est plus",
   ],
   en: [
     "dies at",
@@ -74,7 +71,6 @@ export const DEATH_KEYWORDS = {
     "obituary",
     "passes away",
     "passed away",
-    "mourns the death",
   ],
 };
 
