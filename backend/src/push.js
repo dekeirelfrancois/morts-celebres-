@@ -38,6 +38,19 @@ export function removeSubscription(subscription) {
   return subscriptions.size;
 }
 
+export function subscriberCount() {
+  return subscriptions.size;
+}
+
+export async function sendTestMessage() {
+  return sendToAll({
+    title: "Test Deathswatch",
+    body: "Les notifications sont opérationnelles 🎉",
+    url: "/",
+    source: "système",
+  });
+}
+
 export async function sendToAll(entry) {
   if (!configured) return { sent: 0, dropped: 0, skipped: "not-configured" };
 

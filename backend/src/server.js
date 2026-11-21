@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, entries: size() });
+  res.json({ ok: true, entries: size(), subscribers: push.subscriberCount() });
 });
 
 app.get("/api/push-key", (_req, res) => {
@@ -35,6 +35,15 @@ app.post("/api/subscribe", (req, res) => {
 app.post("/api/unsubscribe", (req, res) => {
   const removed = push.removeSubscription(req.body);
   res.json({ ok: true, subscribers: removed });
+});
+
+app.post("/api/test-push", async (_req, res) => {
+  const result = await push.sendTestMessage();
+  if (result.skipped) {
+    return res.status(503).json({ error: "push non configuré" });
+  }
+  console.log(`[push] test: ${result.sent} envoyé(s), ${result.dropped} supprimé(s), abonnés: ${result.subscribers}`);
+  res.json(result);
 });
 
 app.get("/api/deaths", (req, res) => {
