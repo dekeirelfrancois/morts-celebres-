@@ -15,7 +15,10 @@ const PERSON_POINTS = 6;
 const NEGATIVE_PENALTY = 12;
 
 function normalize(text) {
-  return (text || "").toLowerCase().normalize("NFC");
+  return (text || "")
+    .replace(/[\u2018\u2019\u02BC\u201B]/g, "'") // apostrophes typographiques → ASCII
+    .toLowerCase()
+    .normalize("NFC");
 }
 
 export function scoreItem(title, description, lang) {
@@ -63,9 +66,14 @@ export function scoreItem(title, description, lang) {
   if (negated) score -= NEGATIVE_PENALTY;
   if (retro) score -= NEGATIVE_PENALTY * 2;
 
-  // Un article est retenu s'il a un signal de notoriété, ou un mot-clé de
-  // nécrologie fort présent dans le titre (nécrologie, décès de…, obituary).
-  if (!(strongHit && titleKwHits > 0) && personScore === 0) {
+  // Signal de notoriété obligatoire : profession reconnue, mot de nécrologie,
+  // ou âge du défunt (« à 85 ans », « died at 77 »). Sans cela, un simple
+  // « la mort de [prénom] » dans un article sociéta ne suffit plus.
+  const hasObitWord = /\bnécrolog|obituary\b/i.test(t + " " + d);
+  const hasAge = /\b[àa]\s+\d{1,3}\s*ans\b/i.test(t + " " + d) ||
+    /\b\d{1,3}\s*ans\b/i.test(d) ||
+    /\b(died at|age of|dead at)\s+\d{1,3}\b/i.test(t + " " + d);
+  if (personScore === 0 && !hasObitWord && !hasAge) {
     return { match: false, score, reason: "no-notability-signal" };
   }
 
