@@ -20,7 +20,14 @@
       padding: 14px 16px calc(10px);
       border-bottom: 1px solid #2a2d35;
     }
-    h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.2px; }
+    h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.2px; display: flex; align-items: center; gap: 8px; }
+    #newBadge {
+      display: none;
+      background: #e05555; color: #fff;
+      font-size: 12px; font-weight: 700;
+      border-radius: 999px; padding: 3px 9px;
+      -webkit-font-smoothing: antialiased;
+    }
     #status { font-size: 12px; color: #8a8f98; margin-top: 2px; }
     main { padding: 12px; padding-bottom: env(safe-area-inset-bottom); }
     .card {
@@ -67,7 +74,7 @@
 </head>
 <body>
   <header>
-    <h1>Deathswatch</h1>
+    <h1>Deathswatch <span id="newBadge"></span></h1>
     <div id="status">Chargement…</div>
   </header>
   <div id="pushBar">
@@ -93,9 +100,28 @@
         return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
       });
     }
+    var SEEN_KEY = "dw_lastSeen";
+    var seenMarker = Number(localStorage.getItem(SEEN_KEY) || 0);
+
+    function updateBadge(items) {
+      var badge = document.getElementById("newBadge");
+      if (seenMarker > 0) {
+        var fresh = items.filter(function (it) {
+          return new Date(it.publishedAt).getTime() > seenMarker;
+        }).length;
+        if (fresh > 0) {
+          badge.textContent = fresh > 99 ? "99+" : fresh;
+          badge.style.display = "inline-block";
+        }
+      }
+      localStorage.setItem(SEEN_KEY, String(Date.now()));
+      seenMarker = Date.now();
+    }
+
     function render(items) {
       var el = document.getElementById("list");
       var st = document.getElementById("status");
+      updateBadge(items);
       if (!items.length) {
         el.innerHTML = '<div class="empty">Aucune annonce détectée pour le moment.<br>Le serveur scrute la presse en continu.</div>';
       } else {
