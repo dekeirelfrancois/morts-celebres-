@@ -4,7 +4,7 @@ const require = createRequire(import.meta.url);
 const webpush = require("web-push");
 
 let configured = false;
-const subscriptions = new Set();
+const subscriptions = new Map(); // endpoint → abonnement (dédupliqué par appareil)
 
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
@@ -29,12 +29,13 @@ export function getPublicKey() {
 }
 
 export function addSubscription(subscription) {
-  subscriptions.add(subscription);
+  if (!subscription || !subscription.endpoint) return subscriptions.size;
+  subscriptions.set(subscription.endpoint, subscription); // remplace l'éventuel doublon
   return subscriptions.size;
 }
 
 export function removeSubscription(subscription) {
-  subscriptions.delete(subscription);
+  if (subscription && subscription.endpoint) subscriptions.delete(subscription.endpoint);
   return subscriptions.size;
 }
 
@@ -64,14 +65,14 @@ export async function sendToAll(entry) {
   let sent = 0;
   let dropped = 0;
 
-  for (const sub of subscriptions) {
+  for (const sub of subscriptions.values()) {
     try {
       await webpush.sendNotification(sub, payload);
       sent += 1;
     } catch (e) {
       const status = e.statusCode;
       if (status === 404 || status === 410) {
-        subscriptions.delete(sub);
+        subscriptions.delete(sub.endpoint);
         dropped += 1;
       } else {
         console.error("[push] échec d'envoi:", status || e.message);
