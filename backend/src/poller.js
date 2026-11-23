@@ -15,7 +15,7 @@ export async function pollOnce() {
   const results = await Promise.allSettled(
     FEEDS.map(async (feed) => {
       const parsed = await parser.parseURL(feed.url);
-      return parsed.items.map((item) => buildEntry(item, feed));
+      return Promise.all(parsed.items.map((item) => buildEntry(item, feed)));
     })
   );
 

@@ -135,6 +135,13 @@ export const NEGATIVE_PATTERNS = [
   /\baffaire\b/i,
   /\bcadavre\b/i,
   /\bmeurtre\b/i,
+  /percut(e|ée)?\b/i,
+  /renvers(e|ée)\b/i,
+  /\bpi(é|e)ton\b/i,
+  /\bcamion\b/i,
+  /\bvoiture\b/i,
+  /\bmoto\b/i,
+  /\bcycliste\b/i,
 ];
 
 // Animaux et non-humains : leur « mort » ne doit jamais déclencher une alerte

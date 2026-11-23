@@ -5,6 +5,7 @@ import {
   NEGATIVE_PATTERNS,
   NON_HUMAN_WORDS,
 } from "./config.js";
+import { extractDeceasedName, isNotableByName } from "./notability.js";
 
 export const MATCH_THRESHOLD = 25;
 
@@ -81,11 +82,11 @@ export function scoreItem(title, description, lang) {
   return { match, score, reason: match ? "ok" : "below-threshold" };
 }
 
-export function buildEntry(item, feed) {
+export async function buildEntry(item, feed) {
   const title = (item.title || "").trim();
   const description = (item.contentSnippet || item.content || item.summary || "").trim();
   const { score, reason } = scoreItem(title, description, feed.lang);
-  return {
+  const entry = {
     id: Buffer.from(item.link || item.guid || title).toString("base64url"),
     title,
     description: description.slice(0, 400),
@@ -94,7 +95,30 @@ export function buildEntry(item, feed) {
     lang: feed.lang,
     publishedAt: item.isoDate ? new Date(item.isoDate).toISOString() : new Date().toISOString(),
     score,
-    matched: reason === "ok" && score >= MATCH_THRESHOLD,
+    matched: false,
     reason,
   };
+
+  if (score < MATCH_THRESHOLD) return entry;
+
+  // Verrou notoriété : le défunt doit posséder une page Wikipédia (fr ou en)
+  const name = extractDeceasedName(title, description);
+  if (!name) {
+    entry.reason = "no-name-extracted";
+    return entry;
+  }
+  entry.deceased = name;
+
+  const nb = await isNotableByName(name, feed.lang);
+  entry.wikiTitle = nb.wikiTitle || null;
+  entry.notability = nb.unknown ? "unknown" : nb.wikiTitle ? "wikipedia" : "no-wikipedia-page";
+  entry.matched = Boolean(nb.notable) && score >= MATCH_THRESHOLD;
+  entry.reason = entry.matched
+    ? "ok"
+    : nb.unknown
+      ? "wiki-unavailable"
+      : nb.wikiTitle
+        ? "below-threshold"
+        : "not-notable";
+  return entry;
 }
