@@ -12,8 +12,8 @@ export const FEEDS = [
     lang: "fr",
   },
   {
-    name: "Libération",
-    url: "https://www.liberation.fr/rss/une/",
+    name: "France 24",
+    url: "https://www.france24.com/fr/rss",
     lang: "fr",
   },
   {
@@ -37,8 +37,8 @@ export const FEEDS = [
     lang: "en",
   },
   {
-    name: "Reuters World",
-    url: "https://www.reutersagency.com/feed/?best-topics=obituaries&post_type=best",
+    name: "The Guardian",
+    url: "https://www.theguardian.com/world/rss",
     lang: "en",
   },
 ];
