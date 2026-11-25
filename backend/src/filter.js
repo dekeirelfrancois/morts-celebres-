@@ -111,11 +111,11 @@ export async function buildEntry(item, feed) {
 
   const nb = await isNotableByName(name, feed.lang);
   entry.wikiTitle = nb.wikiTitle || null;
-  entry.notability = nb.unknown ? "unknown" : nb.wikiTitle ? "wikipedia" : "no-wikipedia-page";
+  entry.notability = nb.retry ? "unknown" : nb.wikiTitle ? "wikipedia" : "no-wikipedia-page";
   entry.matched = Boolean(nb.notable) && score >= MATCH_THRESHOLD;
   entry.reason = entry.matched
     ? "ok"
-    : nb.unknown
+    : nb.retry
       ? "wiki-unavailable"
       : nb.wikiTitle
         ? "below-threshold"

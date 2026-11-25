@@ -48,9 +48,11 @@ export function extractDeceasedName(title, description = "") {
     .replace(/[\u2018\u2019\u02BC]/g, "'") // apostrophes typographiques
     .replace(/\s+/g, " ");
 
-  // retire les accroches de lieu (« Ville : ... »)
+  // accroche de lieu « Ville : ... » : titre complet testé d'abord,
+  // la version sans accroche n'est essayée qu'en secours
   const colon = hay.indexOf(" : ");
-  if (colon > -1 && colon < 60) hay = hay.slice(colon + 3).trim();
+  const hays =
+    colon > -1 && colon < 60 ? [hay, hay.slice(colon + 3)] : [hay];
 
   const patterns = [
     /d(?:é|e)c(?:è|e)s d(?:e|')\s*([^,\.»«:;!?]+)/i,
@@ -61,11 +63,13 @@ export function extractDeceasedName(title, description = "") {
     new RegExp(`(${NAME_CLASS}(?:\\s+(?:de|van|von|der|di|del)\\b)?(?:\\s+${NAME_CLASS}){0,3})\\s*[,:(]`, "u"),
   ];
 
-  for (const re of patterns) {
-    const m = hay.match(re);
-    if (!m) continue;
-    const name = sanitizeName(m[1]);
-    if (name) return name;
+  for (const h of hays) {
+    for (const re of patterns) {
+      const m = h.match(re);
+      if (!m) continue;
+      const name = sanitizeName(m[1]);
+      if (name) return name;
+    }
   }
 
   // Formulation « [Fonction] Nom Prénom est mort(e)/décédé(e)/… »
@@ -93,6 +97,11 @@ export function extractDeceasedName(title, description = "") {
 
 function sanitizeName(raw) {
   let name = (raw || "").trim().replace(/[\u2018\u2019\u02BC]/g, "'");
+  // « Mort de X », « Décès de X », « Death of X » : le mot de décès
+  // ne fait jamais partie du nom (sinon pattern[Fonction]s*Name] le garde)
+  name = name
+    .replace(/^((décès|décédée?s?|morte?s?|death|obituary|deuil)\s+((de|of)\s+)?)\s*/i, "")
+    .trim();
   name = name
     .replace(/^l'/i, "")
     .replace(/^(le|la|les)\s+/i, "")
@@ -122,9 +131,17 @@ function sanitizeName(raw) {
   }
   const words = name.split(/\s+/).filter(Boolean);
   if (words.length === 0 || name.length < 4) return null;
-  if (words.length === 1 && name.length < 5) return null;
+  // Un nom d'un seul mot (« Thaïs », « Jean », « Seine-Saint-Denis »)
+  // est trop ambigu : exige prénom + nom.
+  if (words.length < 2) return null;
   return name;
 }
+
+// Pages Wikipédia qui ne sont PAS des personnes (films, œuvres, lieux…)
+const NON_PERSON_WIKI =
+  /\([^)]*(film|roman|novel|série|série t|serie|tv|opera|album|song|single|chanson|personnage|character|ville|commune|île|island|planète|planet|émission|équipe|stade|œuvre|work|opéra|ballet|peinture)[^)]*\)/i;
+const NON_PERSON_EXTRACT =
+  /est un film|est une (série|émission|ville|commune|chanson|église|société|entreprise|épisode|œuvre)|est un (roman|album|personnage|lieu|opéra|ballet|film|île|planète|astre)|is a (film|tv series|novel|song|album|character|city|island)|is an (album|island)/i;
 
 class RateLimited extends Error {}
 
@@ -177,19 +194,35 @@ function titleMatches(wikiTitle, candidate) {
 
 // La page visée doit décrire UNE personne (pas une liste de porteurs du nom)
 async function isSinglePersonPage(wikiTitle, lang) {
-  if (/\([^)]*\)/.test(wikiTitle)) return true; // « X (acteur) » = personne précise
+  if (NON_PERSON_WIKI.test(wikiTitle)) return false;
+  const parenthèse = /\([^)]*\)/.test(wikiTitle);
+  // extracts + catégories : la catégorie cachée « Homonymie » fiabilise la
+  // détection même quand l'extrait TextExtracts est vide.
   const url =
     "https://" + lang + ".wikipedia.org/w/api.php" +
-    "?action=query&prop=extracts&exintro&explaintext&redirects=1&format=json" +
+    "?action=query&prop=extracts%7Ccategories&cllimit=max&clshow=!hidden" +
+    "&exintro&explaintext&redirects=1&format=json" +
     "&titles=" + encodeURIComponent(wikiTitle);
   const res = await fetch(url, { headers: { "User-Agent": "Deathswatch/0.1" } });
   if (!res.ok) return true; // non vérifiable : on accepte
   const json = await res.json();
   const pages = Object.values((json.query && json.query.pages) || {});
   const extract = (pages[0] && pages[0].extract) || "";
+  const categories = ((pages[0] && pages[0].categories) || []).map(
+    (c) => c.title || ""
+  );
+  if (categories.some((c) => /homonymie|disambiguation|disambig/i.test(c))) {
+    return false;
+  }
   const nonPerson =
-    /est un nom de personne|nom de famille|nom porté par|page d'homonymie|peut désigner|répertorie|patronyme|list of people/i;
-  return !nonPerson.test(extract);
+    /est un nom de personne|nom de famille|nom porté par|page d'homonymie|peut désigner|répertorie|patronyme|list of people|may refer to|surname/i;
+  if (nonPerson.test(extract) || NON_PERSON_EXTRACT.test(extract)) return false;
+  // « X (acteur) » = page d'une personne précise (les parenthèses
+  // non-personne ont déjà été rejetées ci-dessus) ; sinon exiger une bio.
+  if (parenthèse) return true;
+  if (extract.length <= 40) return true; // insuffisant pour trancher : on accepte
+  // Au-delà de 40 caractères, l'extrait doit ressembler à une biographie
+  return !/film|roman|série|album|chanson/i.test(extract.slice(0, 120));
 }
 
 /**
